@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1138,6 +1139,30 @@ func (svc *mgmtSvc) SystemSetProp(ctx context.Context, req *mgmtpb.SystemSetProp
 		return nil, err
 	}
 
+	print("If this is a system property that should be propagated to the pools ... \n")
+	for k, v := range req.Properties{
+		fmt.Printf("k: %s, v: %s\n", k, v)
+		if k == "scrub_mode" {
+			print("RYON -> Going to set scrub_mode property\n")
+			value, err := strconv.ParseUint(v, 10, 32)
+			if err != nil {
+				return nil, err
+			}
+			poolProp := &mgmtpb.PoolProperty{
+				Number: daos.PoolPropertyScrubMode,
+				Value:  &mgmtpb.PoolProperty_Numval{
+					Numval: value,
+				},
+			}
+			if err := svc.PoolSetSystemProp(ctx, poolProp, req.GetSys()); err != nil {
+				fmt.Printf("Error setting prop: %s\n", err)
+				print("Need to revert other pool changes?? How to make this atomic?!?\n")
+				return nil, err
+			}
+		}
+	}
+
+
 	return &mgmtpb.DaosResp{}, nil
 }
 
@@ -1148,7 +1173,7 @@ func (svc *mgmtSvc) SystemGetProp(ctx context.Context, req *mgmtpb.SystemGetProp
 	}
 	svc.log.Debugf("Received SystemGetProp RPC: %+v", req)
 	defer func() {
-		svc.log.Debugf("Responding to SystemGetProp RPC: %+v (%v)", resp, err)
+		svc.log.Debugf("Responding to SystemGetProp RPC: %+v (%v)\n", resp, err)
 	}()
 
 	props, err := system.GetUserProperties(svc.sysdb, svc.systemProps, req.GetKeys())
@@ -1158,4 +1183,42 @@ func (svc *mgmtSvc) SystemGetProp(ctx context.Context, req *mgmtpb.SystemGetProp
 
 	resp = &mgmtpb.SystemGetPropResp{Properties: props}
 	return
+}
+
+// PoolSetSystemProp sets the system prop for each pool
+func (svc *mgmtSvc) PoolSetSystemProp(ctx context.Context, prop *mgmtpb.PoolProperty, sys string) (err error){
+	fmt.Printf("Setting system property at the pool level for system: %s, prop: %+v...\n", sys, prop)
+
+	listPoolReq := &mgmtpb.ListPoolsReq {
+		Sys: sys,
+	}
+
+	poolRes, err := svc.ListPools(ctx, listPoolReq)
+	if err != nil {
+		fmt.Printf("Error listing pools: %s\n", err)
+		return err
+	}
+	for _, p := range poolRes.Pools {
+		ps, err := svc.getPoolService(p.Label)
+		if err != nil {
+			return err
+		}
+		ranks, err := svc.getPoolServiceRanks(ps)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Sending prop to Pool: %s, ranks: %d\n", p, ranks[0])
+		req :=  &mgmtpb.PoolSetPropReq{
+			Sys:        sys,
+			Id:         p.Label, // Pool uuid/label
+			Properties: []*mgmtpb.PoolProperty {
+				prop,
+			},
+			SvcRanks:   ranks,
+		}
+		_, err = svc.PoolSetProp(ctx, req)
+	}
+
+	return err
 }

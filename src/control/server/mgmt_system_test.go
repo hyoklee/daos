@@ -9,6 +9,8 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/daos-stack/daos/src/control/drpc"
+	"github.com/daos-stack/daos/src/control/server/engine"
 	"net"
 	"sort"
 	"strconv"
@@ -2053,5 +2055,61 @@ func TestServer_MgmtSvc_Join(t *testing.T) {
 				t.Fatalf("unexpected response (-want, +got)\n%s\n", diff)
 			}
 		})
+	}
+}
+func TestServer_MgmtSvc_SystemPropertiesToPool(t *testing.T) {
+	log, buf := logging.NewTestLogger(t.Name())
+	defer test.ShowBufferOnFailure(t, buf)
+	curMember := mockMember(t, 0, 0, "excluded")
+
+	// Make a copy to avoid test side-effects.
+	curCopy := &system.Member{}
+	*curCopy = *curMember
+	curCopy.Rank = ranklist.NilRank // ensure that db.data.NextRank is incremented
+
+	//svc := mgmtSystemTestSetup(t, log, system.Members{curCopy}, nil)
+	//srv.setDrpcClient(newMockDrpcClient(nil))
+
+	harness := NewEngineHarness(log)
+	sp := storage.NewProvider(log, 0, nil, nil, nil, nil)
+	srv := newTestEngine(log, true, sp)
+
+	if err := harness.AddInstance(srv); err != nil {
+		t.Fatal(err)
+	}
+	srv.setDrpcClient(newMockDrpcClient(nil))
+	harness.started.SetTrue()
+
+	ec := engine.MockConfig().
+		WithTargetCount(1).
+		WithStorage(
+			storage.NewTierConfig().
+				WithStorageClass("ram").
+				WithScmMountPoint("/foo/bar"),
+			storage.NewTierConfig().
+				WithStorageClass("nvme").
+				WithBdevDeviceList("foo", "bar"),
+		)
+
+	svc := newTestMgmtSvc(t, log)
+
+	s := storage.NewProvider(log, 0, &ec.Storage, nil, nil, nil)
+	svc.harness.instances[0] = newTestEngine(log, false, s, ec)
+	dc := newMockDrpcClient(&mockDrpcClientConfig{IsConnectedBool: true})
+	dc.cfg.setSendMsgResponse(drpc.Status_SUCCESS, nil, nil)
+	svc.harness.instances[0].(*EngineInstance)._drpcClient = dc
+	addTestPools(t, svc.sysdb, "12345678-1234-1234-1243-123456789012")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	req := &mgmtpb.SystemSetPropReq{
+		Sys:        "daos_server",
+		Properties: nil,
+	}
+	_, err := svc.SystemSetProp(ctx, req)
+	if err != nil {
+		t.Fatalf("Error: %s", err)
+		return
 	}
 }

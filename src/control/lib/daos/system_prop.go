@@ -285,6 +285,7 @@ func (sp SystemPropertyKey) String() string {
 	if str, found := map[SystemPropertyKey]string{
 		SystemPropertyDaosVersion: "daos_version",
 		SystemPropertyDaosSystem:  "daos_system",
+		SystemPropertyPoolScrubMode:  "scrub_mode",
 	}[sp]; found {
 		return str
 	}
@@ -320,7 +321,8 @@ const (
 	SystemPropertyDaosVersion
 	// SystemPropertyDaosSystem retrieves the DAOS system name.
 	SystemPropertyDaosSystem
-
+	// SystemPropertyPoolScrubMode sets or retrieves the scrubbing mode for the system.
+	SystemPropertyPoolScrubMode
 	// NB: This must be the last entry.
 	systemPropertyMax
 )
@@ -414,6 +416,11 @@ func SystemProperties() SystemPropertyMap {
 			Key:         SystemPropertyDaosSystem,
 			Value:       &CompPropVal{ValueSource: func() string { return build.DefaultSystemName }},
 			Description: "DAOS system name",
+		},
+		SystemPropertyPoolScrubMode: SystemProperty{
+			Key:         SystemPropertyPoolScrubMode,
+			Value:       NewIntPropVal(PoolScrubModeOff, PoolScrubModeOff, PoolScrubModeLazy, PoolScrubModeTimed),
+			Description: "Checksum scrubbing mode",
 		},
 	}
 }

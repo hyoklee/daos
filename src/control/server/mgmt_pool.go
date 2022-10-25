@@ -7,6 +7,7 @@
 package server
 
 import (
+	"fmt"
 	"math/rand"
 	"sort"
 	"time"
@@ -230,6 +231,18 @@ func (svc *mgmtSvc) calculateCreateStorage(req *mgmtpb.PoolCreateReq) error {
 func (svc *mgmtSvc) PoolCreate(ctx context.Context, req *mgmtpb.PoolCreateReq) (resp *mgmtpb.PoolCreateResp, err error) {
 	if err := svc.checkLeaderRequest(req); err != nil {
 		return nil, err
+	}
+	print("RYON -> TODO: Check system properties and set pool properties accordingly!\n")
+	systemPropReq := &mgmtpb.SystemGetPropReq{
+		Sys:  req.Sys,
+		Keys: []string{},
+	}
+	props, err := svc.SystemGetProp(ctx, systemPropReq)
+	if err != nil {
+		return
+	}
+	for k, v := range props.Properties {
+		fmt.Printf("k: %s, v: %s", k, v)
 	}
 
 	svc.log.Debugf("MgmtSvc.PoolCreate dispatch, req:%s\n", mgmtpb.Debug(req))
