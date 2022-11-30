@@ -376,7 +376,9 @@ class DataMoverTestBase(IorTestBase, MdtestBase):
         container.container.uuid = str_to_c_uuid(cont_uuid)
         container.container.poh = pool.pool.handle
         container.uuid = container.container.get_uuid_str()
-        container.label.value = cont_label
+        container.update_params(label=cont_label, type=query_response['container_type'])
+        container.control_method.update(
+            self.params.get('control_method', container.namespace, container.control_method.value))
 
         return container
 
@@ -983,8 +985,7 @@ class DataMoverTestBase(IorTestBase, MdtestBase):
                 self.fail("Invalid tool: {}".format(str(self.tool)))
         except CommandFailure as error:
             self.log.error("%s command failed: %s", str(self.tool), str(error))
-            self.fail("Test was expected to pass but it failed: {}\n".format(
-                test_desc))
+            self.fail("{} command failed: {}\n".format(str(self.tool), test_desc))
 
         # Check the return code
         actual_rc = result.exit_status

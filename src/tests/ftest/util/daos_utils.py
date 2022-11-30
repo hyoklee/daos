@@ -361,8 +361,8 @@ class DaosCommand(DaosCommandBase):
         """Call daos container set-prop.
 
         Args:
-            pool (str): Pool UUID.
-            cont (str): Container UUID.
+            pool (str): Pool UUID or label.
+            cont (str): Container UUID or label.
             prop (str): Container property-name.
             value (str): Container property-name value to set.
 
