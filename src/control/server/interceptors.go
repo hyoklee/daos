@@ -224,6 +224,10 @@ func isSentinelErr(err error) bool {
 // list of interceptors passed to grpc.NewServer.
 func unaryLoggingInterceptor(log logging.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		if m, ok := req.(protoreflect.ProtoMessage); ok && log.EnabledFor(logging.LogLevelDebug) && proto.ShouldDebug(m) {
+			log.Debugf("gRPC request: %s", proto.Debug(m))
+		}
+
 		startTime := time.Now()
 		res, err := handler(ctx, req)
 		elapsed := time.Since(startTime)
@@ -232,15 +236,6 @@ func unaryLoggingInterceptor(log logging.Logger) grpc.UnaryServerInterceptor {
 			// Unwrap the message if it's a gRPC status error.
 			if st, ok := status.FromError(err); ok {
 				logErr = proto.UnwrapError(st)
-			}
-		}
-
-		// If the error is nil or is not a sentinel error, log the request.
-		// We don't want to log sentinel errors because they're spammy and
-		// don't provide any useful debug information.
-		if logErr == nil || !isSentinelErr(logErr) {
-			if m, ok := req.(protoreflect.ProtoMessage); ok && log.EnabledFor(logging.LogLevelDebug) && proto.ShouldDebug(m) {
-				log.Debugf("gRPC request: %s", proto.Debug(m))
 			}
 		}
 

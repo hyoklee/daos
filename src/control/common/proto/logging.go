@@ -29,6 +29,7 @@ func ShouldDebug(msg proto.Message) bool {
 		*grpcpb.RequestVoteRequest, *grpcpb.RequestVoteResponse,
 		*grpcpb.TimeoutNowRequest, *grpcpb.TimeoutNowResponse,
 		*grpcpb.InstallSnapshotRequest, *grpcpb.InstallSnapshotResponse,
+		*mgmtpb.LeaderQueryReq, *mgmtpb.SystemQueryReq,
 		*ctlpb.StorageScanResp, *ctlpb.NetworkScanResp,
 		*ctlpb.StorageFormatResp, *ctlpb.PrepareScmResp:
 		return false
