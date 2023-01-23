@@ -1,5 +1,5 @@
 /**
- * (C) Copyright 2019-2022 Intel Corporation.
+ * (C) Copyright 2019-2023 Intel Corporation.
  *
  * SPDX-License-Identifier: BSD-2-Clause-Patent
  */
@@ -137,7 +137,7 @@ test_cond_helper(test_arg_t *arg, int rf)
 	par_barrier(PAR_COMM_WORLD);
 
 	if (arg->myrank == 0)
-		print_message("All ranks remove the same dir\n");
+		print_message("All ranks remove the same directory\n");
 	par_barrier(PAR_COMM_WORLD);
 	op_rc = dfs_remove(dfs, NULL, dirname, true, NULL);
 	rc = check_one_success(op_rc, ENOENT);
@@ -384,7 +384,7 @@ dfs_test_short_read_internal(void **state, daos_oclass_id_t cid,
 static void
 dfs_test_short_read(void **state)
 {
-	dfs_test_short_read_internal(state, 0, 2000, 1024);
+	dfs_test_short_read_internal(state, OC_S1, 2000, 1024);
 }
 
 static void
@@ -455,7 +455,7 @@ dfs_test_hole_mgmt(void **state)
 
 	if (arg->myrank == 0) {
 		rc = dfs_open(dfs_mt, NULL, name, S_IFREG | S_IWUSR | S_IRUSR,
-			      O_RDWR | O_CREAT, 0, chunk_size, NULL, &obj);
+			      O_RDWR | O_CREAT, OC_S1, chunk_size, NULL, &obj);
 		assert_int_equal(rc, 0);
 	}
 
@@ -684,6 +684,7 @@ dfs_test_cont_atomic(void **state)
 	if (arg->myrank == 0)
 		print_message("All ranks create the same POSIX container\n");
 
+	par_barrier(PAR_COMM_WORLD);
 	op_rc = dfs_cont_create_with_label(arg->pool.poh, "dfs_par_test_cont",
 					   NULL, NULL, NULL, NULL);
 	rc = check_one_success(op_rc, EEXIST);
