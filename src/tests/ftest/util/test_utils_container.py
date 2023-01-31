@@ -279,6 +279,10 @@ class TestContainer(TestDaosApiBase):
         self.written_data = []
         self.epoch = None
 
+        # If defined, use container labels for most operations by default.
+        # Setting to False will use the UUID where possible.
+        self.use_label = True
+
     def __str__(self):
         """Return a string representation of this TestContainer object.
 
@@ -289,6 +293,18 @@ class TestContainer(TestDaosApiBase):
         if self.container is not None and self.uuid is not None:
             return str(self.uuid)
         return super().__str__()
+
+    @property
+    def identifier(self):
+        """Get the container uuid or label.
+
+        Returns:
+            str: label if using labels and one is defined; otherwise the uuid
+
+        """
+        if self.use_label and self.label.value is not None:
+            return self.label.value
+        return self.uuid
 
     def get_params(self, test):
         """Get values for all of the command params from the yaml file.
@@ -958,3 +974,13 @@ class TestContainer(TestDaosApiBase):
         actual_health = output["response"][0]["value"]
 
         return actual_health == expected_health
+
+    def set_attr(self, *args, **kwargs):
+        """Call daos container set-attr.
+
+        Returns:
+            CmdResult: Object that contains exit status, stdout, and other information.
+
+        """
+        return self.daos.container_set_attr(
+            pool=self.pool.identifier, cont=self.identifier, *args, **kwargs)

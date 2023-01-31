@@ -1,5 +1,5 @@
 """
-  (C) Copyright 2019-2022 Intel Corporation.
+  (C) Copyright 2019-2023 Intel Corporation.
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
 """
@@ -456,6 +456,7 @@ class VerifyPermsCommand(ExecutableCommand):
         self.other_user = FormattedParameter("--other-user {}")
         self.verify_mode = FormattedParameter("--verify-mode {}")
         self.create_type = FormattedParameter("--create-type {}")
+        self.no_chmod = FormattedParameter("--no-chmod", False)
 
         # run options
         self.hosts = hosts.copy()
