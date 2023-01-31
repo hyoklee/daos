@@ -1,5 +1,5 @@
 /**
- * (C) Copyright 2016-2022 Intel Corporation.
+ * (C) Copyright 2016-2023 Intel Corporation.
  *
  * SPDX-License-Identifier: BSD-2-Clause-Patent
  */
@@ -58,6 +58,7 @@ ec_dkey_list_punch(void **state)
 	struct ioreq	req;
 	daos_obj_id_t	oid;
 	int		num_dkey;
+	int		num_dkey_create = 1000000;
 	int		i;
 
 	if (!test_runable(arg, 6))
@@ -65,7 +66,7 @@ ec_dkey_list_punch(void **state)
 
 	oid = daos_test_oid_gen(arg->coh, ec_obj_class, 0, 0, arg->myrank);
 	ioreq_init(&req, arg->coh, oid, DAOS_IOD_ARRAY, arg);
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < num_dkey_create; i++) {
 		char dkey[32];
 		daos_recx_t recx;
 		char data[16];
@@ -74,35 +75,36 @@ ec_dkey_list_punch(void **state)
 		req.iod_type = DAOS_IOD_ARRAY;
 		sprintf(dkey, "dkey_%d", i);
 		recx.rx_nr = 5;
-		recx.rx_idx = i * EC_CELL_SIZE;
+		recx.rx_idx = 0;
+		// recx.rx_idx = ((i * EC_CELL_SIZE) % DAOS_EC_CELL_MAX) + EC_CELL_SIZE;
 		memset(data, 'a', 16);
 		insert_recxs(dkey, "a_key", 1, DAOS_TX_NONE, &recx, 1,
 			     data, 16, &req);
 	}
 
 	num_dkey = get_dkey_cnt(&req);
-	assert_int_equal(num_dkey, 100);
+	assert_int_equal(num_dkey, num_dkey_create);
 
 	daos_fail_loc_set(DAOS_OBJ_SKIP_PARITY | DAOS_FAIL_ALWAYS);
 	num_dkey = get_dkey_cnt(&req);
-	assert_int_equal(num_dkey, 100);
+	assert_int_equal(num_dkey, num_dkey_create);
 	daos_fail_loc_set(0);
 
 	/* punch the dkey */
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < num_dkey_create; i++) {
 		char dkey[32];
 
 		/* Make dkey on different shards */
 		sprintf(dkey, "dkey_%d", i);
 		punch_dkey(dkey, DAOS_TX_NONE, &req);
-		if (i % 10 == 0) {
+		if (i % 1000 == 0) {
 			num_dkey = get_dkey_cnt(&req);
-			assert_int_equal(num_dkey, 100 - i - 1);
+			assert_int_equal(num_dkey, num_dkey_create - i - 1);
 
 			daos_fail_loc_set(DAOS_OBJ_SKIP_PARITY |
 					  DAOS_FAIL_ALWAYS);
 			num_dkey = get_dkey_cnt(&req);
-			assert_int_equal(num_dkey, 100 - i - 1);
+			assert_int_equal(num_dkey, num_dkey_create - i - 1);
 			daos_fail_loc_set(0);
 		}
 	}
