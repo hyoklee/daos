@@ -55,6 +55,12 @@ agg_rate_ctl(void *arg)
 	if (dss_ult_exiting(req) || pool->sp_reclaim == DAOS_RECLAIM_DISABLED)
 		return -1;
 
+	/* If the container is discarding the object mostly due to rebuild failure
+	 * reclaim, let's abort the aggregation to let discard proceed.
+	 */
+	if (cont->sc_discarding)
+		return -1;
+
 	/* System is idle, let aggregation run in tight mode */
 	if (!dss_xstream_is_busy()) {
 		sched_req_yield(req);
