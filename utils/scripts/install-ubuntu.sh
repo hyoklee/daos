@@ -35,7 +35,7 @@ apt-get install \
     libjson-c-dev \
     liblz4-dev \
     libnuma-dev \
-    libopenmpi-dev \
+    libmpich-dev \
     libprotobuf-c-dev \
     librdmacm-dev \
     libssl-dev \
@@ -44,6 +44,7 @@ apt-get install \
     libyaml-dev \
     locales \
     maven \
+    mpich \
     numactl \
     openjdk-8-jdk \
     patchelf \
