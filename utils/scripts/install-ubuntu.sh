@@ -35,6 +35,7 @@ apt-get install \
     libjson-c-dev \
     liblz4-dev \
     libnuma-dev \
+    libmd-dev \
     libmpich-dev \
     libprotobuf-c-dev \
     librdmacm-dev \
