@@ -1,3 +1,4 @@
 all:
-	pip install -r requirements.txt
+	which pip3
+	pip3 install -r requirements.txt
 	scons --build-deps=yes install
