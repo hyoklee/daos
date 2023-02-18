@@ -4,7 +4,7 @@ name: Landings
 on:
   push:
     branches:
-      - master
+      - master-
       - 'release/*'
   pull_request:
     paths:

@@ -2,9 +2,9 @@ name: spack
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ master ]
   pull_request:
-    branches: [ develop ]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
