@@ -45,7 +45,7 @@ jobs:
         spack external find pkgconf
         spack external find zlib
         spack external find xz
-        spack install daos ^protobuf-c@1.4.1 ^protobuf@3.21.12 ^python@3.10.6
+        spack install daos@2.2.0 ^protobuf-c@1.4.1 ^protobuf@3.21.12 ^python@3.10.6
         spack load daos
         make
 
