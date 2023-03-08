@@ -23,7 +23,7 @@ jobs:
       with:
         repository: hyoklee/spack
         path: ./spack
-    - name: Test with make
+    - name: Test with Spack
       run: |
         . ./spack/share/spack/setup-env.sh
         spack compiler find
@@ -47,5 +47,5 @@ jobs:
         spack external find xz
         spack install daos@2.2.0 ^dpdk@main ^go@1.19.5 ^protobuf-c@1.4.1 ^protobuf@3.21.12 ^python@3.10.6
         spack load daos
-        make
+
 
